@@ -5,5 +5,5 @@ load_dotenv()
 
 ROOT_LOGINS = ["pkrzastek@ekonomik.gniezno.pl"] # Default users allowed to log in
 SESSION_TYPE = "filesystem"
-LOGIN_ENABLED = True
+LOGIN_ENABLED = False
 SECRET_KEY = os.getenv("SECRET_KEY")
