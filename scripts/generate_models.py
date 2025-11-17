@@ -15,5 +15,7 @@ PORT = os.getenv("port")
 DBNAME = os.getenv("dbname")
 DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
 
-print(f'Generuję plik modeli dla schematu {SCHEMA}')
-subprocess.run(['sqlacodegen', DATABASE_URL, '--schema', SCHEMA, '--outfile', OUTFILE], check=True)
+decision = input("UWAGA. Wszystkie modele automatycznie wygenerowane zostaną nadpisane! Jeśli chcesz kontynuować wpisz 'ok': ")
+if decision.lower() == 'ok':
+    print(f'Generuję plik modeli dla schematu {SCHEMA}')
+    subprocess.run(['sqlacodegen', DATABASE_URL, '--schema', SCHEMA, '--outfile', OUTFILE], check=True)

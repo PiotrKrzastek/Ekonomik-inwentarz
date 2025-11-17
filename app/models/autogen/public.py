@@ -115,7 +115,7 @@ class Items(Base):
     room_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     inventory_id: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String(1024), nullable=False)
-    price: Mapped[decimal.Decimal] = mapped_column(Numeric, nullable=False)
+    price: Mapped[decimal.Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True))
     description: Mapped[Optional[str]] = mapped_column(Text)
     bought_at: Mapped[Optional[datetime.date]] = mapped_column(Date)
