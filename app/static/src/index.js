@@ -13,9 +13,9 @@ window.uuid = uuidv4;
 /** @type {any} */
 window.tagify = tagify;
 
-function showTemporaryAlert(tag, message, duration = 5000, container = 'alerts') {
+function showTemporaryAlert(tag, message, duration = 5000, container = '#alerts') {
   const uuid = uuidv4();
-  const alertsContainer = document.getElementById(container);
+  const alertsContainer = document.querySelector(container);
   if (!alertsContainer) return;
 
   const alertEl = document.createElement('div');

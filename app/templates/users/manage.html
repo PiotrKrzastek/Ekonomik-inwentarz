@@ -1,180 +1,120 @@
-{% extends "/base.html" %}
-
-{% block content %}
-<div class="container-fluid mt-4 px-4">  <!-- Added margin-top and padding-x for spacing -->
-    <div class="row flex-column flex-lg-row g-4"> <!-- g-4 adds spacing between columns -->
-
-        <!-- Left column (User Management Table) -->
-        <div class="col-12 col-lg-7 shadow border border-light-subtle rounded p-4 mx-auto text-center" style="min-height: 85vh;">
-            <h1 class="mb-3"><b><i class="bi bi-person"></i> Użytkownicy</b></h1>
-            <p class="mb-4">
-                Użytkownicy zostają tutaj dodani automatycznie przy pierwszym logowaniu, gdy filtracja jest wyłączona. <br>
-                Gdy filtracja jest włączona, mogą się zalogować TYLKO gdy są już zapisani w bazie i mają do tego uprawnienia.<br>
-                Znajdziesz tu informacje o pierwszym logowaniu i ostatniej aktywności.
-            </p>
-
-            <form method="post">
-                <div class="table-responsive mb-3" style="height: 60vh;">
-                    <table class="table table-sm table-bordered align-middle text-wrap">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="text-nowrap">Dostęp</th>
-                                <th>Adres</th>
-                                <th class="text-nowrap">Ostatnie logowanie</th>
-                                <th class="text-nowrap">Ostatnia akcja</th>
-                                <th>Przedmiot akcji</th>
-                                <th>Akcje</th>
-                            </tr>
-                        </thead>
-                        <tbody class="table-group-divider">
-                            {% for user in users %}
-                            <tr>
-                                <form method="post" action="{{ url_for('users.ManageUsers') }}">
-                                <td><input class="form-check-input" name="permission{{user._id}}" {% if user.name == currentUser or currentUser == 'Anonymous' %} disabled {% endif %} type="checkbox"{% if user.permission %} checked {% endif %}></td>
-                                <td><b>{{ user.name }}</b></td>
-                                <td>{{ user.last_login }}</td>
-                                <td>{{ user.last_action }}</td>
-                                <td class="text-break">{{ user.action_item }}</td>
-                                <td style="white-space: nowrap;">
-                                    <button class="btn btn-success" {% if user.name == currentUser or currentUser == 'Anonymous' or not currentPriviledge %} disabled {% endif %} name="updateSingleUser" value="{{ user._id }}"><i class="bi bi-floppy"></i></button>
-                                    <button type="button" class="btn btn-danger" {% if user.name == currentUser or currentUser == 'Anonymous' or not currentPriviledge %} disabled {% endif %} data-bs-toggle="modal" data-bs-target="#deleteConfirm" data-bs-name="{{user.name}}" data-bs-identifier="{{user._id}}"><i class="bi bi-trash"></i></button>
-                                </td>
-                                </form>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-
-                    {% if not users %}
-                    <div id="infoMissing" class="d-flex justify-content-center align-items-center py-5">
-                        <h3 class="alert alert-danger text-center w-75">
-                            Brak adresów. Taka sytuacja nie powinna wystąpić, chyba że opcja logowania jest wyłączona.
-                            Jeśli widzisz to po zalogowaniu – skontaktuj się z administratorem.
-                        </h3>
-                    </div>
-                    {% endif %}
+<div class="toast z-50" id="toasts"></div>
+<div class="flex flex-wrap flex-column lg:flex-row flex-row justify-center p-4 xl:p-12 gap-12">
+    <div class="shadow-lg shadow-black rounded bg-base-300 border border-gray-700 w-full xl:w-[55%] h-full p-4">
+        <div>
+            <div class="overflow-x-auto overflow-y-auto max-h-[700px]">
+                <div id="table-alerts" class="mb-3">
                 </div>
-
-                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 mt-3">
-<!--                    <button type="submit" name="saveAllSpecs" value="1" {% if currentUser == 'Anonymous' %} disabled {% endif %} class="btn btn-success">Zapisz wszystko</button>-->
-
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#toggleFilter" {% if not currentPriviledge %} disabled {% endif %} class="btn btn-danger">Przełącz filtracje</button>
-
-                    {% if filterState %}
-                        <span class="badge bg-success">OBECNIE JEST WŁĄCZONA</span>
-                    {% else %}
-                        <span class="badge bg-secondary">OBECNIE JEST WYŁĄCZONA</span>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
-
-        <!-- Right column (Add User Form) -->
-        <div class="col-12 col-lg-3 shadow border border-light-subtle rounded p-4 mx-auto text-center" style="min-height: 85vh;">
-            <h1 class="mb-3"><b>Dodaj użytkownika ręcznie</b></h1>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="d-flex flex-column align-items-center">
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show mt-2 mx-auto text-center" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zamknij"></button>
-                </div>
-                {% endfor %}
+                <table class="table w-full table-pin-rows">
+                    <thead>
+                        <tr>
+                            <th class="w-[45%] text-left align-middle">Email</th>
+                            <th class="w-[5%] text-center align-middle">Posiada uprawnienia</th>
+                            <th class="w-[25%] text-right align-middle">Ostatnie logowanie</th>
+                            <th class="w-[25%] text-center align-middle">Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableContent">
+                        {% include 'users/partials/table_content.html' %}
+                    </tbody>
+                </table>
             </div>
-            {% endif %}
-            {% endwith %}
-
-            <p class="mb-4">
-                Dodaj użytkownika bez konieczności logowania po raz pierwszy. Użyteczne, gdy filtracja jest włączona.
-            </p>
-
-            <form method="post" action="{{url_for('users.ManageUsers')}}">
-                <div class="mb-3 text-start">
-                    <label for="name" class="form-label">Adres użytkownika:</label>
-                    <div class="input-group">
-                        <input type="text" id="name" name="newName" class="form-control" placeholder="Adres" required>
-                        <span class="input-group-text">@ekonomik.gniezno.pl</span>
-                    </div>
-                </div>
-
-                <div class="form-check mb-4 text-start">
-                    <input class="form-check-input" type="checkbox" name="newPermission" id="defaultCheck1">
-                    <label class="form-check-label" for="defaultCheck1">
-                        Uprawniony do aplikacji
+        </div>
+    </div>
+    <div class="shadow-lg shadow-black rounded bg-base-300 border border-gray-700 w-full xl:w-[35%] h-full p-4">
+        <h3 class="text-lg font-bold mb-4">Dodaj użytkownika</h3>
+        <form hx-post="{{ url_for('users.create_user') }}" hx-target="#tableContent" id="createUserForm"
+            hx-disabled-elt="find #createUserButton" hx-indicator="#addUserIndicator">
+            <fieldset class="fieldset">
+                <label class="input w-full">
+                    <input class="" type="text" placeholder="nazwa użytkownika" name="name" required />
+                    <span class="label">@ekonomik.gniezno.pl</span>
+                </label>
+                <p class="label">Nazwa musi być unikalna</p>
+            </fieldset>
+            <fieldset class="fieldset mt-4 mb-5">
+                <label class="label">
+                    <input type="checkbox" class="checkbox" name="permission" />
+                    Posiada uprawnienia
+                </label>
+            </fieldset>
+            <div class="tooltip w-full" data-tip="Dodaj">
+                <button class="btn btn-primary w-full" id="createUserButton">
+                    <div class="inplace-indicator" id="addUserIndicator"><span
+                            class="loading loading-spinner loading-md"></span></div>
+                    <span class="button-text"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-icon lucide-plus">
+                            <path d="M5 12h14" />
+                            <path d="M12 5v14" />
+                        </svg></span>
+                </button>
+            </div>
+        </form>
+        <div class="divider"></div>
+        <h3 class="text-lg font-bold mb-4">Globalny filtr użytkowników</h3>
+        <form hx-post="{{ url_for('users.manage_global_filter_status') }}" hx-swap="none"
+            hx-trigger="change delay:250ms">
+            <fieldset>
+                <label class="label">
+                    Status filtra:
+                    <label class="swap">
+                        <input type="checkbox" id="filterCheckbox" name="is_active" {% if filter_status %} checked {%
+                            endif %} />
+                        <div class="swap-on">
+                            <div class="badge badge-primary">Aktywny</div>
+                        </div>
+                        <div class="swap-off">
+                            <div class="badge badge-error">Nieaktywny</div>
+                        </div>
                     </label>
-                </div>
+                </label>
+            </fieldset>
+        </form>
+        <div class="collapse p-0 mt-3">
+            <input type="checkbox" class="p-0" />
+            <div class="collapse-title font-semibold px-0">Czym jest globalna filtracja?</div>
+            <div class="collapse-content text-sm px-0">
+                Filtracja to coś co jest super
+            </div>
+        </div>
+    </div>
+</div>
 
-                <button type="submit" class="btn btn-primary w-100" name="addUser" value="1" {% if not currentPriviledge %} disabled {% endif %}>Dodaj użytkownika</button>
+<dialog id="addUserModal" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="text-lg font-bold">Dodaj użytkownika</h3>
+        <div class="mt-5">
+            <form hx-post="{{ url_for('users.create_user') }}" hx-target="#tableContent" id="createUserForm">
+                <fieldset class="fieldset">
+                    <label class="input min-w-[320px] w-full">
+                        <input class="" type="text" placeholder="nazwa użytkownika" name="name" required />
+                        <span class="label">@ekonomik.gniezno.pl</span>
+                    </label>
+                    <p class="label">Nazwa musi być unikalna</p>
+                </fieldset>
+                <fieldset class="fieldset mt-4 mb-5">
+                    <label class="label">
+                        <input type="checkbox" class="checkbox" name="permission" />
+                        Posiada uprawnienia
+                    </label>
+                </fieldset>
+                <div class="tooltip w-full" data-tip="Dodaj">
+                    <button class="btn btn-primary w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-save-icon lucide-save">
+                            <path
+                                d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                            <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+                            <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+                        </svg>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
-</div>
-
-<!-- Modal for toggling filter -->
-<div class="modal fade" id="toggleFilter" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="toggleFilterLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="toggleFilterLabel">Zmiana statusu</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
-            </div>
-            <div class="modal-body">
-                Czy jesteś pewien, że chcesz zmienić status filtracji?
-            </div>
-            <div class="modal-footer justify-content-around">
-                <form method="post" action="{{ url_for('users.ManageUsers') }}" class="d-flex w-100">
-                    <button type="button" class="btn btn-danger w-25 mx-auto" data-bs-dismiss="modal">Nie</button>
-                    <button type="submit" class="btn btn-success w-25 mx-auto" name="toggleFilterState" value="1">Tak</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for deleting user -->
-<div class="modal fade" id="deleteConfirm" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="toggleFilterLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="deleteConfirmLabel">Potwierdzenie usunięcia</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
-            </div>
-            <div class="modal-body" id="modal-message">
-
-            </div>
-            <div class="modal-footer">
-                <form method="post" action="{{ url_for('users.ManageUsers') }}" class="d-flex w-100">
-                    <button type="button" class="btn btn-danger w-25 mx-auto" data-bs-dismiss="modal">Nie</button>
-                    <button type="submit" class="btn btn-success w-25 mx-auto" name="deleteUser" id="modalConfirmButton" value="">
-                        Tak
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-    const exampleModal = document.getElementById('deleteConfirm');
-    if (exampleModal) {
-      exampleModal.addEventListener('show.bs.modal', event => {
-        const button = event.relatedTarget;
-        const name = button.getAttribute('data-bs-name');
-        const id = button.getAttribute('data-bs-identifier');
-
-        // Update modal content
-        const modalBody = exampleModal.querySelector('#modal-message');
-        const modalConfirm = exampleModal.querySelector('#modalConfirmButton');
-
-        modalBody.innerText = `Czy jesteś pewien, że chcesz usunąć użytkownika o adresie: ${name}`;
-        modalConfirm.value = id;
-      });
-    }
-  });
-</script>
-
-{% endblock %}
+</dialog>
