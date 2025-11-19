@@ -1,0 +1,35 @@
+<div hx-swap-oob="beforeend:#alerts">
+  <div role="alert" class="alert alert-soft alert-error mb-4 flex flex-col w-120" id="alert_{{ uuid }}">
+    <div class="w-full flex items-center gap-2">
+      <button class="btn btn-sm btn-error btn-soft btn-circle" aria-label="close alert">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+      <span>{{ message }}</span>
+    </div>
+
+    <div class="collapse bg-base-100 border-base-300 border w-full">
+      <input type="checkbox" />
+      <div class="collapse-title font-semibold">Kliknij po szczegóły</div>
+      <div class="collapse-content text-sm">
+        <ul>
+          {% for error in error_messages %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const alertElement = document.getElementById("alert_{{ uuid }}");
+      const button = alertElement.querySelector("button");
+      button.addEventListener("click", function () {
+        alertElement.remove();
+      });
+    })();
+  </script>
+</div>
