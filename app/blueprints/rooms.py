@@ -1,8 +1,5 @@
 from app import auth
-from flask import Blueprint, render_template, request, redirect, url_for, Response
-
-from app.blueprints.utils import build_temporary_alert, build_advanced_form_error_feedback
-from app.forms.rooms import EditRoomForm
+from flask import Blueprint, render_template, request, redirect, url_for
 
 from app.models.rooms import Rooms
 from app.models.users import Users
@@ -20,15 +17,12 @@ def RoomList(*, context={"user": {"name": "Anonymous", "preffered_username": "An
     - POST: Update room keepers
     """
     if request.method == "POST":
-        form = EditRoomForm(request.form)
-        if form.validate():
         # Update room keepers from form
-            editedRoom = Rooms.Edit(form.room_id.data, form.teacher_name.data)
-            return build_temporary_alert(request, message="Dodano opiekuna do sali", container='#toasts')
-        else:
-            return build_advanced_form_error_feedback(request, form=form, message="Wystąpił błąd")
+        for room in request.form:
+            room_id = room[6:]
+            editedRoom = Rooms.Edit(room_id, request.form.get(room))
 
-            # return redirect(url_for("rooms.RoomList"))
+        return redirect(url_for("rooms.RoomList"))
 
 
     # Pagination setup
